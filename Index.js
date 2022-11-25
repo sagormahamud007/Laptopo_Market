@@ -1,5 +1,5 @@
 const express = require('express');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const cors = require('cors');
 const jwt = require('jsonwebtoken')
 require('dotenv').config()
@@ -20,10 +20,39 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 async function run() {
     try {
         const usersCollection = client.db('laptopMarket').collection('users')
-        const bookingsCollection = client.db('laptopMarket').collection('bookings')
+        const categoriesCollection = client.db('laptopMarket').collection('categories')
+        const productsCollection = client.db('laptopMarket').collection('allProducts')
 
-        const productsCollection = client.db('laptopMarket').collection('products')
 
+        //get operation
+        //get all category data
+        app.get('/categories', async (req, res) => {
+            const query = {}
+            const categories = await categoriesCollection.find(query).toArray();
+            res.send(categories)
+        })
+
+        app.get('/categories/:id', async (req, res) => {
+            const id = req.params.id;
+            console.log(id)
+            const query = { _id: ObjectId(id) }
+            const categories = await categoriesCollection.findOne(query)
+            res.send(categories)
+        })
+        app.get('/allProducts', async (req, res) => {
+            const brand_name = req.query.category_name
+            console.log(brand_name);
+            const query = { brand_name: brand_name }
+            const category = await productsCollection.find(query).toArray()
+            res.send(category)
+        })
+
+        //users post
+        app.post('/users', async (req, res) => {
+            const users = req.body;
+            const result = await usersCollection.insertOne(users)
+            res.send(result)
+        })
         //bookings data
         // app.post('/bookings', async (req, res) => {
         //     const bookings = req.body;
@@ -31,19 +60,9 @@ async function run() {
         //     res.send(result)
         // })
 
-        // //booking all data
-        // app.get('/bookings', async (req, res) => {
-        //   const query={}
-        //     const bookings = await bookingsCollection.find(query).toArray();
-        //     res.send(bookings)
-        // })
 
-        //users post
-        // app.post('/users', async (req, res) => {
-        //     const users = req.body;
-        //     const result = await usersCollection.insertOne(users)
-        //     res.send(result)
-        // })
+
+
 
         //user get all data
         // app.get('/users', async (req, res) => {
@@ -53,35 +72,24 @@ async function run() {
         // })
 
 
-        // app.delete('/doctors/:id', async (req, res) => {
-        //     const id = req.params.id;
-        //     const filter = { _id: ObjectId(id) }
-        //     const result = await doctorsCollection.deleteOne(filter)
-        //     res.send(result)
+
+
+        //jwt token
+        // app.get('/jwt',async(req,res)=>{
+        //     const email=req.query.email;
+        //     const query={email:email}
+        //     const user=await usercollection.findOne(query)
+        //     res.send(user)
         // })
+
+
+
     }
     finally {
 
     }
 }
-
-
-
-
-
-
-
-
-
-
-//jwt token
-// app.get('/jwt',async(req,res)=>{
-//     const email=req.query.email;
-//     const query={email:email}
-//     const user=await usercollection.findOne(query)
-//     res.send(user)
-// })
-
+run().catch(err => console.error(err))
 
 app.get('/', (req, res) => {
     res.send('used product is running')
@@ -89,3 +97,15 @@ app.get('/', (req, res) => {
 app.listen(port, (req, res) => {
     console.log(`used product is running on port number ${port}`);
 })
+
+
+
+
+
+
+
+
+
+
+
+
