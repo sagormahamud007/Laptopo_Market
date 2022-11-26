@@ -15,7 +15,7 @@ app.use(express.json())
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.uuzniqz.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
-function verifyingToken(req, res, next) {
+function verifyToken(req, res, next) {
 
     const header = req.headers.authorization;
     if (!header) {
@@ -31,16 +31,14 @@ function verifyingToken(req, res, next) {
     })
 
 }
-
-
 async function run() {
     try {
         const usersCollection = client.db('laptopMarket').collection('users')
         const categoriesCollection = client.db('laptopMarket').collection('categories')
         const productsCollection = client.db('laptopMarket').collection('allProducts')
+        const bookingsCollection = client.db('laptopMarket').collection('bookings')
 
 
-        //get operation
         //get all category data
         app.get('/categories', async (req, res) => {
             const query = {}
@@ -55,32 +53,34 @@ async function run() {
             const categories = await categoriesCollection.findOne(query)
             res.send(categories)
         })
-        app.get('/allProducts', async (req, res) => {
-            // const email = req.query.email;
-            // const decodedEmail = req.decoded.email;
-            // if (email !== decodedEmail) {
-            //     return res.status(403).send({ message: 'forbidden access' });
-            // }
-            const brand_name = req.query.category_name;
+        //all product
+        app.get('/allProducts', verifyToken, async (req, res) => {
+            const email = req.query.email;
+            const decodedEmail = req.decoded.email;
+            if (email !== decodedEmail) {
+                return res.status(403).send({ message: 'forbidden access' });
+            }
+            const brand_name = req.query.brand_name;
+            console.log(brand_name)
             const query = { brand_name: brand_name }
             const category = await productsCollection.find(query).toArray()
             res.send(category)
         })
 
         // get all seller
-        app.get('/seller', verifyingToken, async (req, res) => {
+        app.get('/seller', verifyToken, async (req, res) => {
             const email = req.query.email;
             const decodedEmail = req.decoded.email;
             if (email !== decodedEmail) {
                 return res.status(403).send({ message: 'forbidden access' });
             }
-            const query = { role: 'seller' }
+            const query = { role: "seller" }
             const seller = await usersCollection.find(query).toArray()
             res.send(seller)
         })
 
         // get all bayer 
-        app.get('/bayer', verifyingToken, async (req, res) => {
+        app.get('/bayer', verifyToken, async (req, res) => {
             const email = req.query.email;
             const decodedEmail = req.decoded.email;
             if (email !== decodedEmail) {
@@ -104,6 +104,13 @@ async function run() {
             res.send({ token })
         })
 
+        //bookings data
+        app.post('/bookings', async (req, res) => {
+            const bookings = req.body;
+            const result = await bookingsCollection.insertOne(bookings)
+            res.send(result)
+        })
+
 
         //jwt token
         // app.get('/jwt',async(req,res)=>{
@@ -114,12 +121,7 @@ async function run() {
         // })
 
 
-        //bookings data
-        // app.post('/bookings', async (req, res) => {
-        //     const bookings = req.body;
-        //     const result = await bookingsCollection.insertOne(bookings)
-        //     res.send(result)
-        // })
+
 
 
 
