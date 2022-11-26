@@ -19,12 +19,12 @@ function verifyToken(req, res, next) {
 
     const header = req.headers.authorization;
     if (!header) {
-        return res.status(401).send('sorry unauthrize access');
+        return res.status(401).send('UnAuthorized access');
     }
     const token = header.split(' ')[1];
     jwt.verify(token, process.env.ACCESS_TOKEN, function (err, decoded) {
         if (err) {
-            return res.status(403).send({ message: 'forbidden access' })
+            return res.status(403).send({ message: 'Forbidden access' })
         }
         req.decoded = decoded;
         next();
@@ -35,7 +35,7 @@ async function run() {
     try {
         const usersCollection = client.db('laptopMarket').collection('users')
         const categoriesCollection = client.db('laptopMarket').collection('categories')
-        const productsCollection = client.db('laptopMarket').collection('allProducts')
+        const productsCollection = client.db('laptopMarket').collection('productData')
         const bookingsCollection = client.db('laptopMarket').collection('bookings')
 
 
@@ -102,6 +102,18 @@ async function run() {
             const user = req.body
             const token = jwt.sign(user, process.env.ACCESS_TOKEN, { expiresIn: "2 days" })
             res.send({ token })
+        })
+
+        //Get the booking all data from mongoDB
+        app.get('/bookingData', verifyToken, async (req, res) => {
+            const email = req.query.email;
+            const decodedEmail = req.decoded.email;
+            if (email !== decodedEmail) {
+                return res.status(403).send({ message: 'Forbidden Access' })
+            }
+            const query = {};
+            const bookingData = await bookingsCollection.find(query).toArray()
+            res.send(bookingData)
         })
 
         //bookings data
