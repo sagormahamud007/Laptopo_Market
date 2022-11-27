@@ -53,7 +53,7 @@ async function run() {
             const categories = await categoriesCollection.findOne(query)
             res.send(categories)
         })
-        //all product
+        //all product data
         app.get('/allProducts', verifyToken, async (req, res) => {
             const email = req.query.email;
             const decodedEmail = req.decoded.email;
@@ -66,6 +66,19 @@ async function run() {
             const category = await productsCollection.find(query).toArray()
             res.send(category)
         })
+
+        //get the user add data
+        app.get('/myProduct', verifyToken, async (req, res) => {
+            const email = req.query.email;
+            const decodedEmail = req.decoded.email;
+            if (email !== decodedEmail) {
+                return res.status(403).send({ message: 'forbidden access' });
+            }
+            const query = { userEmail: email }
+            const result = await productsCollection.find(query).toArray();
+            res.send(result)
+        })
+
 
         // get all seller
         app.get('/seller', verifyToken, async (req, res) => {
@@ -89,6 +102,18 @@ async function run() {
             const query = { role: 'bayer' }
             const bayer = await usersCollection.find(query).toArray()
             res.send(bayer)
+        })
+
+        //all products
+        app.post('/allProduct', verifyToken, async (req, res) => {
+            const email = req.query.email;
+            const decodedEmail = req.decoded.email;
+            if (email !== decodedEmail) {
+                return res.status(403).send({ message: 'forbidden access' });
+            }
+            const product = req.body;
+            const result = await productsCollection.insertOne(product)
+            res.send(result)
         })
 
         //users post
